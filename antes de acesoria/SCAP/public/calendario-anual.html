@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendario Anual Administrativo – SCAP (Azul y Blanco)</title>
+  <meta name="description" content="Gestión de calendario anual con marcado de días laborables, feriados, vacaciones, cumpleaños y emergencias para administradores SCAP." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ===== RESET & BASE (TEMA AZUL Y BLANCO SCAP) ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-page:        #f0f2f7;
+      --bg-card:        #ffffff;
+      --bg-panel:       #f8fafc;
+      --bg-month:       #ffffff;
+      --bg-hover:       #eff6ff;
+      --border:         #e2e8f0;
+      --border-light:   #cbd5e1;
+      --text-primary:   #0f172a;
+      --text-secondary: #475569;
+      --text-muted:     #94a3b8;
+
+      --c-work:         #10b981;   /* Verde Esmeralda Suave */
+      --c-work-bg:      #dcfce7;
+      --c-holiday:      #d97706;   /* Ámbar Cálido */
+      --c-holiday-bg:   #fef3c7;
+      --c-birthday:     #1d4ed8;   /* Azul Rey Marca SCAP */
+      --c-birthday-bg:  #dbeafe;
+      --c-emergency:    #dc2626;   /* Rojo Alerta */
+      --c-emergency-bg: #fee2e2;
+      --c-vacation:     #0284c7;   /* Azul Turquesa Océano */
+      --c-vacation-bg:  #e0f2fe;
+      --c-weekend:      #f8fafc;
+
+      --accent:         #2563eb;   /* Azul Principal */
+      --accent-dark:    #1e3a8a;
+      --accent-glow:    rgba(37,99,235,0.25);
+      --radius-sm:  8px;
+      --radius-md:  12px;
+      --radius-lg:  16px;
+      --radius-xl:  20px;
+      --shadow-lg:  0 10px 30px rgba(15,23,42,0.08);
+      --trans:      all 0.2s ease;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-page);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    /* ===== MAIN CARD ===== */
+    .calendar-card {
+      max-width: 1500px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+
+    /* ===== HEADER ===== */
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--accent-dark);
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+      color: #ffffff;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 14px; }
+
+    .header-icon {
+      width: 48px; height: 48px;
+      background: rgba(255,255,255,0.2);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .header-title h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.01em; color: #ffffff; }
+    .header-title p  { font-size: 0.82rem; color: #dbeafe; margin-top: 2px; }
+
+    .year-nav {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: var(--radius-md);
+      padding: 6px 14px;
+    }
+
+    .year-nav button {
+      background: none; border: none; cursor: pointer;
+      color: #ffffff; font-size: 18px;
+      display: flex; align-items: center;
+      transition: var(--trans);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .year-nav button:hover { background: rgba(255,255,255,0.25); }
+
+    #yearDisplay {
+      font-size: 1.25rem; font-weight: 800;
+      min-width: 52px; text-align: center;
+      color: #ffffff;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1; min-width: 220px; max-width: 340px;
+    }
+
+    .search-wrap svg {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); pointer-events: none;
+    }
+
+    #searchInput {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      padding: 10px 12px 10px 38px;
+      transition: var(--trans);
+      outline: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    #searchInput::placeholder { color: var(--text-muted); }
+    #searchInput:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    #searchSuggestions {
+      position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+      background: #ffffff;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      z-index: 100;
+      overflow: hidden;
+      box-shadow: 0 12px 32px rgba(15,23,42,0.15);
+      display: none;
+    }
+    .suggestion-item {
+      padding: 10px 14px; cursor: pointer; font-size: 0.84rem;
+      transition: background 0.15s;
+      display: flex; align-items: center; gap: 10px;
+      color: var(--text-primary);
+    }
+    .suggestion-item:hover { background: var(--bg-hover); color: var(--accent); }
+
+    /* ===== TOOLBAR ===== */
+    .toolbar {
+      display: flex; align-items: center; flex-wrap: wrap;
+      gap: 8px; padding: 16px 32px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .toolbar-label {
+      font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--text-secondary); margin-right: 4px;
+    }
+
+    .tool-btn {
+      display: flex; align-items: center; gap: 7px;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-light);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: var(--trans); white-space: nowrap;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .tool-btn:hover {
+      color: var(--accent); background: var(--bg-hover);
+      border-color: #93c5fd; transform: translateY(-1px);
+    }
+    .tool-btn .dot {
+      width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+    }
+
+    .tool-work     .dot { background: var(--c-work); }
+    .tool-vacation .dot { background: var(--c-vacation); }
+    .tool-holiday  .dot { background: var(--c-holiday); }
+    .tool-birthday .dot { background: var(--c-birthday); }
+    .tool-emergency .dot { background: var(--c-emergency); }
+    .tool-eraser   .dot { background: var(--text-muted); border: 1px solid var(--border-light); }
+
+    .tool-btn.active-tool { border-color: var(--accent); background: #dbeafe; color: #1e40af; }
+
+    .toolbar-sep { width: 1px; height: 28px; background: var(--border-light); margin: 0 4px; }
+
+    .btn-bulk {
+      display: flex; align-items: center; gap: 7px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--accent-dark);
+      background: linear-gradient(135deg, #1e40af, #2563eb);
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem; font-weight: 700;
+      cursor: pointer; transition: var(--trans); white-space: nowrap;
+      box-shadow: 0 2px 6px rgba(37,99,235,0.2);
+    }
+    .btn-bulk:hover {
+      background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+      transform: translateY(-1px);
+    }
+
+    .btn-clear {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 7px;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(220,38,38,0.3);
+      background: rgba(220,38,38,0.06);
+      color: #dc2626;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.78rem; font-weight: 600;
+      cursor: pointer; transition: var(--trans);
+    }
+    .btn-clear:hover { background: rgba(220,38,38,0.12); border-color: rgba(220,38,38,0.5); }
+
+    /* ===== CALENDAR GRID ===== */
+    .calendar-body { padding: 24px 28px 28px; background: #ffffff; }
+
+    .months-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+    @media (max-width: 1100px) { .months-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 780px)  { .months-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px)  { .months-grid { grid-template-columns: 1fr; } }
+
+    .month-card {
+      background: var(--bg-month);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden; transition: var(--trans);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+    .month-card:hover { border-color: #93c5fd; box-shadow: 0 4px 12px rgba(37,99,235,0.08); }
+    .month-card.highlighted { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+    .month-header {
+      padding: 10px 14px;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border-bottom: 1px solid #dbeafe;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .month-name {
+      font-size: 0.84rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-dark);
+    }
+
+    .month-count {
+      font-size: 0.68rem; font-weight: 600; color: var(--accent);
+      background: #ffffff; padding: 2px 8px; border-radius: 12px;
+      border: 1px solid #bfdbfe;
+    }
+
+    .day-headers {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 1px; padding: 6px 8px 2px;
+    }
+
+    .day-header-cell {
+      text-align: center; font-size: 0.64rem; font-weight: 700;
+      text-transform: uppercase; padding: 3px 0; color: var(--text-secondary);
+    }
+    .day-header-cell.weekend { color: var(--text-muted); }
+
+    .days-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 3px; padding: 6px 8px 8px;
+    }
+
+    .day-cell {
+      position: relative;
+      aspect-ratio: 1;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.74rem; font-weight: 600;
+      border-radius: 6px; cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+      border: 1px solid transparent;
+      color: #334155;
+    }
+
+    .day-cell.empty { cursor: default; }
+    .day-cell:not(.empty):hover { border-color: var(--accent); transform: scale(1.15); z-index: 2; }
+    .day-cell.is-today { box-shadow: 0 0 0 2px var(--accent); font-weight: 800; color: var(--accent-dark) !important; }
+
+    .day-cell.weekend-cell:not([class*="state-"]) {
+      color: var(--text-muted); background: var(--c-weekend);
+    }
+
+    .day-cell.state-work      { background: var(--c-work-bg);      color: #15803d; border-color: #86efac; }
+    .day-cell.state-vacation  { background: var(--c-vacation-bg);  color: #0369a1; border-color: #93c5fd; }
+    .day-cell.state-holiday   { background: var(--c-holiday-bg);   color: #b45309; border-color: #fde68a; }
+    .day-cell.state-birthday  { background: var(--c-birthday-bg);  color: #1d4ed8; border-color: #93c5fd; }
+    .day-cell.state-emergency {
+      background: var(--c-emergency-bg); color: #b91c1c; border-color: #fca5a5;
+      animation: pulse-emg 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-emg {
+      0%, 100% { box-shadow: none; }
+      50%       { box-shadow: 0 0 8px rgba(220,38,38,0.4); }
+    }
+
+    .day-cell .badge {
+      position: absolute; top: 1px; right: 2px;
+      font-size: 8px; line-height: 1;
+    }
+
+    /* ===== LEGEND + STATS ===== */
+    .legend-bar {
+      display: flex; align-items: center; flex-wrap: wrap;
+      gap: 6px 20px; padding: 16px 32px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-panel);
+    }
+
+    .legend-label {
+      font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--text-secondary); margin-right: 8px;
+    }
+
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); }
+    .legend-dot  { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.1); }
+    .legend-dot.work      { background: var(--c-work-bg); border-color: #86efac; }
+    .legend-dot.vacation  { background: var(--c-vacation-bg); border-color: #93c5fd; }
+    .legend-dot.holiday   { background: var(--c-holiday-bg); border-color: #fde68a; }
+    .legend-dot.birthday  { background: var(--c-birthday-bg); border-color: #93c5fd; }
+    .legend-dot.emergency { background: var(--c-emergency-bg); border-color: #fca5a5; }
+    .legend-dot.weekend   { background: var(--c-weekend); border: 1px solid var(--border); }
+
+    .stats-bar {
+      display: flex; align-items: center; flex-wrap: wrap;
+      gap: 6px 24px; padding: 12px 32px;
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border);
+    }
+    .stat-item { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); }
+    .stat-count { font-weight: 800; font-size: 0.9rem; }
+    .stat-count.work      { color: #15803d; }
+    .stat-count.vacation  { color: #0369a1; }
+    .stat-count.holiday   { color: #b45309; }
+    .stat-count.birthday  { color: #1d4ed8; }
+    .stat-count.emergency { color: #b91c1c; }
+
+    /* ===== TOOLTIP ===== */
+    #tooltip {
+      position: fixed; pointer-events: none; z-index: 9999;
+      background: #ffffff;
+      border: 1px solid #93c5fd;
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 0.8rem; color: var(--text-primary);
+      max-width: 240px; line-height: 1.5;
+      box-shadow: 0 10px 25px rgba(15,23,42,0.15);
+      opacity: 0; transform: translateY(6px);
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    #tooltip.visible { opacity: 1; transform: translateY(0); }
+    #tooltip .tt-date  { font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; }
+    #tooltip .tt-state { display: flex; align-items: center; gap: 6px; font-weight: 700; margin-bottom: 2px; }
+    #tooltip .tt-note  { color: var(--text-secondary); font-size: 0.76rem; }
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+      padding: 16px;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: #ffffff;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      width: 100%; max-width: 520px;
+      box-shadow: 0 20px 50px rgba(15,23,42,0.2);
+      transform: translateY(20px) scale(0.97);
+      transition: transform 0.25s, opacity 0.25s;
+      max-height: 90vh; overflow-y: auto;
+    }
+    .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .modal-title { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 800; color: var(--accent-dark); }
+
+    .modal-icon {
+      width: 38px; height: 38px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+
+    .modal-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--text-muted); font-size: 22px; line-height: 1;
+      transition: color 0.15s; padding: 4px;
+    }
+    .modal-close:hover { color: var(--text-primary); }
+
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: block; font-size: 0.78rem; font-weight: 700;
+      color: var(--text-secondary); margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      padding: 10px 12px;
+      transition: var(--trans); outline: none;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .form-textarea { resize: vertical; min-height: 80px; }
+    .form-hint { font-size: 0.72rem; color: var(--text-muted); margin-top: 5px; }
+
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+    .btn-secondary {
+      padding: 10px 20px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border); background: var(--bg-panel);
+      color: var(--text-secondary); font-family: 'Inter', sans-serif;
+      font-size: 0.84rem; font-weight: 600; cursor: pointer; transition: var(--trans);
+    }
+    .btn-secondary:hover { color: var(--text-primary); background: #e2e8f0; }
+
+    .btn-primary {
+      padding: 10px 20px; border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      background: linear-gradient(135deg, #1e40af, #2563eb);
+      color: #fff; font-family: 'Inter', sans-serif;
+      font-size: 0.84rem; font-weight: 700; cursor: pointer; transition: var(--trans);
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+    .btn-primary:hover { opacity: 0.95; transform: translateY(-1px); }
+
+    /* ===== TOAST ===== */
+    #toast-container {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9998;
+      display: flex; flex-direction: column; gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      background: #ffffff; border: 1px solid var(--border-light);
+      border-radius: var(--radius-md); padding: 12px 18px;
+      font-size: 0.84rem; font-weight: 600; color: var(--text-primary);
+      box-shadow: 0 10px 25px rgba(15,23,42,0.15);
+      display: flex; align-items: center; gap: 10px;
+      animation: slideUp 0.3s ease, fadeOut 0.4s ease 2.6s forwards;
+      max-width: 340px;
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-8px); } }
+
+    @media (max-width: 700px) {
+      .card-header { padding: 16px 20px; }
+      .calendar-body { padding: 16px; }
+      .toolbar, .legend-bar, .stats-bar { padding: 12px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOOLTIP -->
+<div id="tooltip">
+  <div class="tt-date" id="tt-date"></div>
+  <div class="tt-state" id="tt-state"></div>
+  <div class="tt-note" id="tt-note"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast-container"></div>
+
+<!-- MODAL: Vacaciones -->
+<div class="modal-overlay" id="modal-vacation">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">
+        <div class="modal-icon" style="background:var(--c-vacation-bg)">🏖️</div>
+        Asignar Periodo Vacacional
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-vacation')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Empleado / Grupo (opcional)</label>
+      <input type="text" class="form-input" id="vac-employee" placeholder="Ej: Todos, Dpto. Contabilidad..." />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Rango de Fechas</label>
+      <div class="form-row">
+        <div>
+          <input type="date" class="form-input" id="vac-from" />
+          <div class="form-hint">Fecha inicio</div>
+        </div>
+        <div>
+          <input type="date" class="form-input" id="vac-to" />
+          <div class="form-hint">Fecha fin</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas</label>
+      <textarea class="form-textarea" id="vac-note" placeholder="Periodo vacacional de verano..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('modal-vacation')">Cancelar</button>
+      <button class="btn-primary" onclick="applyVacation()">🏖️ Aplicar Vacaciones</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Feriado -->
+<div class="modal-overlay" id="modal-holiday">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">
+        <div class="modal-icon" style="background:var(--c-holiday-bg)">🎉</div>
+        Registrar Día Feriado
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-holiday')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nombre del Feriado</label>
+      <input type="text" class="form-input" id="hol-name" placeholder="Ej: Día de la Independencia..." />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Fecha</label>
+      <input type="date" class="form-input" id="hol-date" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo de Feriado</label>
+      <select class="form-select" id="hol-type">
+        <option value="Feriado Nacional">Feriado Nacional</option>
+        <option value="Feriado Local">Feriado Local / Regional</option>
+        <option value="Feriado Institucional">Feriado Institucional</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('modal-holiday')">Cancelar</button>
+      <button class="btn-primary" onclick="applyHoliday()">🎉 Marcar Feriado</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Cumpleaños -->
+<div class="modal-overlay" id="modal-birthday">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">
+        <div class="modal-icon" style="background:var(--c-birthday-bg)">🎂</div>
+        Registrar Cumpleaños
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-birthday')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nombre del Trabajador</label>
+      <input type="text" class="form-input" id="bday-name" placeholder="Nombre completo..." />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cargo / Departamento</label>
+      <input type="text" class="form-input" id="bday-dept" placeholder="Ej: Analista – Dpto. RRHH..." />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Fecha de Cumpleaños</label>
+      <input type="date" class="form-input" id="bday-date" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('modal-birthday')">Cancelar</button>
+      <button class="btn-primary" onclick="applyBirthday()">🎂 Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Emergencia -->
+<div class="modal-overlay" id="modal-emergency">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">
+        <div class="modal-icon" style="background:var(--c-emergency-bg)">🚨</div>
+        Declarar Emergencia / Suspensión de Labores
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-emergency')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo de Emergencia</label>
+      <select class="form-select" id="emg-type">
+        <option value="Decreto Nacional">🏛️ Decreto Nacional</option>
+        <option value="Decisión Administrativa">🏢 Decisión / Administración del Instituto</option>
+        <option value="Emergencia Sanitaria">🏥 Emergencia Sanitaria</option>
+        <option value="Desastre Natural">⛈️ Desastre Natural</option>
+        <option value="Otro">⚠️ Otro</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Rango de Fechas — No se labora</label>
+      <div class="form-row">
+        <div>
+          <input type="date" class="form-input" id="emg-from" />
+          <div class="form-hint">Fecha inicio</div>
+        </div>
+        <div>
+          <input type="date" class="form-input" id="emg-to" />
+          <div class="form-hint">Fecha fin (opcional)</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Motivo / Descripción</label>
+      <textarea class="form-textarea" id="emg-reason" placeholder="Describe el motivo de la suspensión de labores..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('modal-emergency')">Cancelar</button>
+      <button class="btn-primary" style="background:linear-gradient(135deg,#dc2626,#991b1b)" onclick="applyEmergency()">🚨 Declarar Emergencia</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Confirmar limpieza -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <div class="modal-title">
+        <div class="modal-icon" style="background:rgba(220,38,38,0.1)">⚠️</div>
+        Confirmar Limpieza Total
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-confirm')">✕</button>
+    </div>
+    <p style="color:var(--text-secondary);font-size:0.88rem;line-height:1.6;margin-bottom:24px">
+      ¿Estás seguro de que deseas eliminar <strong style="color:var(--text-primary)">todos los marcados</strong>
+      del calendario del año <strong id="confirmYear" style="color:var(--text-primary)">2026</strong>?
+      Esta acción no se puede deshacer.
+    </p>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('modal-confirm')">Cancelar</button>
+      <button class="btn-primary" style="background:linear-gradient(135deg,#dc2626,#991b1b)" onclick="clearAll()">Sí, limpiar todo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN CARD ===== -->
+<div class="calendar-card" role="main" aria-label="Calendario Anual Administrativo SCAP">
+
+  <!-- Header -->
+  <div class="card-header">
+    <div class="header-left">
+      <div class="header-icon" aria-hidden="true">📅</div>
+      <div class="header-title">
+        <h1>Calendario Anual Administrativo</h1>
+        <p>SCAP – Sistema de Control y Administración de Personal</p>
+      </div>
+    </div>
+
+    <div class="year-nav" aria-label="Navegación de año">
+      <button id="prevYear" onclick="changeYear(-1)" aria-label="Año anterior">‹</button>
+      <span id="yearDisplay" aria-live="polite">2026</span>
+      <button id="nextYear" onclick="changeYear(1)" aria-label="Año siguiente">›</button>
+    </div>
+
+    <div class="search-wrap" role="search">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Buscar mes o fecha (ej: julio, 15/07)..."
+        autocomplete="off"
+        aria-label="Buscador de mes o fecha"
+        oninput="handleSearch()"
+        onfocus="handleSearch()"
+      />
+      <div id="searchSuggestions" role="listbox" aria-label="Sugerencias"></div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar" role="toolbar" aria-label="Herramientas de administrador">
+    <span class="toolbar-label">Herramientas:</span>
+
+    <button class="btn-bulk" id="btnBulkWork" onclick="bulkMarkWorkdays()"
+      title="Marcar todos los Lunes a Viernes del año como días laborables">
+      ⚡ Marcar Días Laborables (Lun–Vie)
+    </button>
+
+    <div class="toolbar-sep" aria-hidden="true"></div>
+
+    <button class="tool-btn tool-work active-tool" id="tool-work" onclick="setActiveTool('work')"
+      title="Pincel: marcar/desmarcar días laborables individualmente">
+      <span class="dot"></span> Laborable
+    </button>
+    <button class="tool-btn tool-vacation" id="tool-vacation" onclick="openModalVacation()"
+      title="Asignar rango de vacaciones">
+      <span class="dot"></span> Vacaciones
+    </button>
+    <button class="tool-btn tool-holiday" id="tool-holiday" onclick="openModal('modal-holiday')"
+      title="Registrar feriado en fecha específica">
+      <span class="dot"></span> Feriado
+    </button>
+    <button class="tool-btn tool-birthday" id="tool-birthday" onclick="openModal('modal-birthday')"
+      title="Registrar cumpleaños de trabajador">
+      <span class="dot"></span> Cumpleaños
+    </button>
+    <button class="tool-btn tool-emergency" id="tool-emergency" onclick="openModal('modal-emergency')"
+      title="Declarar emergencia / suspensión de labores">
+      <span class="dot"></span> Emergencia
+    </button>
+
+    <div class="toolbar-sep" aria-hidden="true"></div>
+
+    <button class="tool-btn tool-eraser" id="tool-eraser" onclick="setActiveTool('eraser')"
+      title="Borrador: quitar marcado de días individuales">
+      <span class="dot"></span> Borrador
+    </button>
+
+    <button class="btn-clear" onclick="openConfirmClear()" title="Eliminar todos los marcados del año actual">
+      🗑️ Limpiar Todo
+    </button>
+  </div>
+
+  <!-- Calendar -->
+  <div class="calendar-body">
+    <div class="months-grid" id="monthsGrid" role="grid" aria-label="Calendario anual"></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar" role="status" aria-live="polite">
+    <span class="stat-item">📊 Resumen <strong id="statYear" style="color:var(--accent)">2026</strong>:</span>
+    <span class="stat-item"><span class="stat-count work" id="stat-work">0</span>&nbsp;Laborables</span>
+    <span class="stat-item"><span class="stat-count vacation" id="stat-vacation">0</span>&nbsp;Vacaciones</span>
+    <span class="stat-item"><span class="stat-count holiday" id="stat-holiday">0</span>&nbsp;Feriados</span>
+    <span class="stat-item"><span class="stat-count birthday" id="stat-birthday">0</span>&nbsp;Cumpleaños</span>
+    <span class="stat-item"><span class="stat-count emergency" id="stat-emergency">0</span>&nbsp;Emergencias</span>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend-bar" role="complementary" aria-label="Leyenda de colores del calendario">
+    <span class="legend-label">Leyenda:</span>
+    <div class="legend-item"><div class="legend-dot work"></div> Día Laborable</div>
+    <div class="legend-item"><div class="legend-dot vacation"></div> Vacaciones</div>
+    <div class="legend-item"><div class="legend-dot holiday"></div> Feriado</div>
+    <div class="legend-item"><div class="legend-dot birthday"></div> Cumpleaños</div>
+    <div class="legend-item"><div class="legend-dot emergency"></div> Emergencia / Decreto</div>
+    <div class="legend-item"><div class="legend-dot weekend"></div> Fin de Semana</div>
+  </div>
+</div>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+let currentYear = new Date().getFullYear();
+let activeTool  = 'work'; // 'work' | 'eraser'
+
+const dayData = {};
+
+const MONTHS_ES = [
+  'Enero','Febrero','Marzo','Abril','Mayo','Junio',
+  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
+];
+
+const DAY_HEADERS = ['Lu','Ma','Mi','Ju','Vi','Sá','Do'];
+
+const STATE_META = {
+  work:      { label: '✅ Día Laborable',   color: '#15803d' },
+  vacation:  { label: '🏖️ Vacaciones',      color: '#0369a1' },
+  holiday:   { label: '🎉 Feriado',         color: '#b45309' },
+  birthday:  { label: '🎂 Cumpleaños',      color: '#1d4ed8' },
+  emergency: { label: '🚨 Emergencia',      color: '#b91c1c' },
+};
+
+function buildCalendar() {
+  const grid = document.getElementById('monthsGrid');
+  grid.innerHTML = '';
+  document.getElementById('yearDisplay').textContent  = currentYear;
+  document.getElementById('statYear').textContent     = currentYear;
+  document.getElementById('confirmYear').textContent  = currentYear;
+
+  const today = new Date();
+  for (let m = 0; m < 12; m++) {
+    grid.appendChild(buildMonth(m, today));
+  }
+  updateStats();
+}
+
+function buildMonth(monthIndex, today) {
+  const firstDay  = new Date(currentYear, monthIndex, 1);
+  const totalDays = new Date(currentYear, monthIndex + 1, 0).getDate();
+  let startDow = (firstDay.getDay() + 6) % 7; // Monday-first
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'month-card';
+  wrapper.id        = `month-${monthIndex}`;
+
+  wrapper.innerHTML = `
+    <div class="month-header">
+      <span class="month-name">${MONTHS_ES[monthIndex]}</span>
+      <span class="month-count" id="mcount-${monthIndex}"></span>
+    </div>
+    <div class="day-headers">
+      ${DAY_HEADERS.map((d, i) => `<div class="day-header-cell${i >= 5 ? ' weekend' : ''}">${d}</div>`).join('')}
+    </div>
+    <div class="days-grid" id="days-${monthIndex}"></div>
+  `;
+
+  const daysGrid = wrapper.querySelector(`#days-${monthIndex}`);
+
+  for (let i = 0; i < startDow; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'day-cell empty';
+    daysGrid.appendChild(empty);
+  }
+
+  for (let d = 1; d <= totalDays; d++) {
+    const key       = dateKey(currentYear, monthIndex, d);
+    const dow       = (new Date(currentYear, monthIndex, d).getDay() + 6) % 7;
+    const isWeekend = dow >= 5;
+    const isToday   = (
+      today.getFullYear() === currentYear &&
+      today.getMonth()    === monthIndex  &&
+      today.getDate()     === d
+    );
+
+    const cell = document.createElement('div');
+    cell.className = 'day-cell' + (isWeekend ? ' weekend-cell' : '') + (isToday ? ' is-today' : '');
+    cell.textContent = d;
+    cell.dataset.key = key;
+
+    applyStateToDayCell(cell, key);
+
+    cell.addEventListener('click',      ()  => handleDayClick(key, cell));
+    cell.addEventListener('mouseenter', (e) => showTooltip(e, key, d, monthIndex));
+    cell.addEventListener('mouseleave', ()  => hideTooltip());
+
+    daysGrid.appendChild(cell);
+  }
+
+  updateMonthCount(monthIndex);
+  return wrapper;
+}
+
+function applyStateToDayCell(cell, key) {
+  cell.classList.remove('state-work','state-vacation','state-holiday','state-birthday','state-emergency');
+  cell.querySelectorAll('.badge').forEach(b => b.remove());
+
+  const info = dayData[key];
+  if (!info) return;
+
+  cell.classList.add(`state-${info.state}`);
+
+  if (info.state === 'birthday') {
+    const b = document.createElement('span');
+    b.className = 'badge'; b.textContent = '🎂';
+    cell.appendChild(b);
+  }
+  if (info.state === 'emergency') {
+    const b = document.createElement('span');
+    b.className = 'badge'; b.textContent = '🚨';
+    cell.appendChild(b);
+  }
+}
+
+function handleDayClick(key, cell) {
+  if (activeTool === 'eraser') {
+    delete dayData[key];
+  } else if (activeTool === 'work') {
+    if (dayData[key] && dayData[key].state === 'work') {
+      delete dayData[key];
+    } else {
+      dayData[key] = { state: 'work', label: 'Día Laborable', note: '' };
+    }
+  }
+  applyStateToDayCell(cell, key);
+  const parts = key.split('-');
+  updateMonthCount(parseInt(parts[1]) - 1);
+  updateStats();
+}
+
+function setActiveTool(tool) {
+  activeTool = tool;
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active-tool'));
+  const btn = document.getElementById(`tool-${tool}`);
+  if (btn) btn.classList.add('active-tool');
+}
+
+function bulkMarkWorkdays() {
+  const btn = document.getElementById('btnBulkWork');
+  btn.disabled    = true;
+  btn.textContent = '⏳ Procesando...';
+
+  setTimeout(() => {
+    let count = 0;
+    const d   = new Date(currentYear, 0, 1);
+    const end = new Date(currentYear, 11, 31);
+
+    while (d <= end) {
+      const dow = d.getDay();
+      if (dow >= 1 && dow <= 5) {
+        const key = dateKey(d.getFullYear(), d.getMonth(), d.getDate());
+        if (!dayData[key]) {
+          dayData[key] = { state: 'work', label: 'Día Laborable', note: '' };
+          count++;
+        }
+      }
+      d.setDate(d.getDate() + 1);
+    }
+
+    buildCalendar();
+    showToast(`✅ ${count} días laborables marcados (Lun–Vie ${currentYear})`, '#10b981');
+    btn.disabled    = false;
+    btn.textContent = '⚡ Marcar Días Laborables (Lun–Vie)';
+  }, 80);
+}
+
+function openModalVacation() {
+  document.getElementById('vac-from').value = `${currentYear}-01-01`;
+  document.getElementById('vac-to').value   = `${currentYear}-01-15`;
+  openModal('modal-vacation');
+}
+
+function applyVacation() {
+  const from     = document.getElementById('vac-from').value;
+  const to       = document.getElementById('vac-to').value;
+  const employee = document.getElementById('vac-employee').value.trim();
+  const note     = document.getElementById('vac-note').value.trim();
+
+  if (!from || !to)   { showToast('⚠️ Selecciona ambas fechas', '#d97706'); return; }
+  if (from > to)      { showToast('⚠️ La fecha inicio debe ser menor o igual a la fecha fin', '#d97706'); return; }
+
+  let count = 0;
+  const d   = new Date(from + 'T00:00:00');
+  const end = new Date(to   + 'T00:00:00');
+
+  while (d <= end) {
+    if (d.getFullYear() === currentYear) {
+      const key = dateKey(d.getFullYear(), d.getMonth(), d.getDate());
+      dayData[key] = {
+        state: 'vacation',
+        label: employee ? `🏖️ Vacaciones – ${employee}` : '🏖️ Periodo Vacacional',
+        note:  note || ''
+      };
+      count++;
+    }
+    d.setDate(d.getDate() + 1);
+  }
+
+  buildCalendar();
+  closeModal('modal-vacation');
+  showToast(`🏖️ ${count} días marcados como Vacaciones`, '#0284c7');
+}
+
+function applyHoliday() {
+  const name = document.getElementById('hol-name').value.trim();
+  const date = document.getElementById('hol-date').value;
+  const type = document.getElementById('hol-type').value;
+
+  if (!name) { showToast('⚠️ Escribe el nombre del feriado', '#d97706'); return; }
+  if (!date) { showToast('⚠️ Selecciona una fecha', '#d97706'); return; }
+
+  const d = new Date(date + 'T00:00:00');
+  if (d.getFullYear() !== currentYear) {
+    showToast(`⚠️ La fecha debe corresponder al año ${currentYear}`, '#d97706'); return;
+  }
+
+  const key = dateKey(d.getFullYear(), d.getMonth(), d.getDate());
+  dayData[key] = { state: 'holiday', label: `🎉 ${name}`, note: type };
+
+  refreshDay(key);
+  closeModal('modal-holiday');
+  showToast(`🎉 Feriado "${name}" registrado`, '#d97706');
+}
+
+function applyBirthday() {
+  const name = document.getElementById('bday-name').value.trim();
+  const dept = document.getElementById('bday-dept').value.trim();
+  const date = document.getElementById('bday-date').value;
+
+  if (!name) { showToast('⚠️ Escribe el nombre del trabajador', '#d97706'); return; }
+  if (!date) { showToast('⚠️ Selecciona la fecha de cumpleaños', '#d97706'); return; }
+
+  const d   = new Date(date + 'T00:00:00');
+  const key = dateKey(d.getFullYear(), d.getMonth(), d.getDate());
+
+  dayData[key] = {
+    state: 'birthday',
+    label: `🎂 Cumpleaños de ${name}`,
+    note:  dept || ''
+  };
+
+  refreshDay(key);
+  closeModal('modal-birthday');
+  showToast(`🎂 Cumpleaños de ${name} registrado`, '#1d4ed8');
+}
+
+function applyEmergency() {
+  const type   = document.getElementById('emg-type').value;
+  const from   = document.getElementById('emg-from').value;
+  const to     = document.getElementById('emg-to').value || from;
+  const reason = document.getElementById('emg-reason').value.trim();
+
+  if (!from) { showToast('⚠️ Selecciona al menos la fecha de inicio', '#d97706'); return; }
+  if (from > to) { showToast('⚠️ La fecha inicio debe ser menor o igual a la fecha fin', '#d97706'); return; }
+
+  let count = 0;
+  const d   = new Date(from + 'T00:00:00');
+  const end = new Date(to   + 'T00:00:00');
+
+  while (d <= end) {
+    if (d.getFullYear() === currentYear) {
+      const key = dateKey(d.getFullYear(), d.getMonth(), d.getDate());
+      dayData[key] = {
+        state: 'emergency',
+        label: `🚨 ${type}`,
+        note:  reason || 'Suspensión de labores'
+      };
+      count++;
+    }
+    d.setDate(d.getDate() + 1);
+  }
+
+  buildCalendar();
+  closeModal('modal-emergency');
+  showToast(`🚨 ${count} día(s) declarados en Emergencia`, '#dc2626');
+}
+
+function openConfirmClear() {
+  document.getElementById('confirmYear').textContent = currentYear;
+  openModal('modal-confirm');
+}
+
+function clearAll() {
+  for (const k of Object.keys(dayData)) {
+    if (k.startsWith(currentYear + '-')) delete dayData[k];
+  }
+  buildCalendar();
+  closeModal('modal-confirm');
+  showToast(`🗑️ Todos los marcados del año ${currentYear} eliminados`, '#64748b');
+}
+
+const tooltip = document.getElementById('tooltip');
+
+function showTooltip(e, key, day, monthIndex) {
+  const info    = dayData[key];
+  const dow     = (new Date(currentYear, monthIndex, day).getDay() + 6) % 7;
+  const dowNames = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+
+  document.getElementById('tt-date').textContent = `${dowNames[dow]}, ${day} de ${MONTHS_ES[monthIndex]} ${currentYear}`;
+
+  if (info) {
+    const meta = STATE_META[info.state];
+    document.getElementById('tt-state').innerHTML = `<span style="color:${meta.color}">${info.label}</span>`;
+    document.getElementById('tt-note').textContent = info.note || '';
+  } else {
+    const lbl = dow >= 5 ? '📅 Fin de Semana' : '📅 Sin marcar';
+    document.getElementById('tt-state').innerHTML  = `<span style="color:var(--text-muted)">${lbl}</span>`;
+    document.getElementById('tt-note').textContent = '';
+  }
+
+  tooltip.classList.add('visible');
+  moveTooltip(e);
+}
+
+function moveTooltip(e) {
+  const x  = e.clientX + 14;
+  const y  = e.clientY + 14;
+  tooltip.style.left = `${Math.min(x, window.innerWidth  - 250)}px`;
+  tooltip.style.top  = `${Math.min(y, window.innerHeight - 90)}px`;
+}
+
+document.addEventListener('mousemove', (e) => {
+  if (tooltip.classList.contains('visible')) moveTooltip(e);
+});
+
+function hideTooltip() { tooltip.classList.remove('visible'); }
+
+function handleSearch() {
+  const q   = document.getElementById('searchInput').value.trim().toLowerCase();
+  const box = document.getElementById('searchSuggestions');
+  if (!q) { box.style.display = 'none'; return; }
+
+  const results = [];
+  MONTHS_ES.forEach((name, idx) => {
+    if (name.toLowerCase().includes(q)) {
+      results.push({ label: name, index: idx, day: null, icon: '📅', sub: 'Ir al mes' });
+    }
+  });
+
+  const m = q.match(/^(\d{1,2})[\/\-](\d{1,2})$/);
+  if (m) {
+    const day = parseInt(m[1]);
+    const mon = parseInt(m[2]) - 1;
+    if (mon >= 0 && mon < 12) {
+      results.push({ label: `${day} de ${MONTHS_ES[mon]}`, index: mon, day, icon: '🗓️', sub: 'Ir a la fecha' });
+    }
+  }
+
+  if (!results.length) { box.style.display = 'none'; return; }
+
+  box.innerHTML = results.map(r =>
+    `<div class="suggestion-item" onclick="jumpTo(${r.index},${r.day ?? 'null'})">
+      <span>${r.icon}</span>
+      <div>
+        <div>${r.label}</div>
+        <div style="font-size:0.75rem;color:var(--text-muted)">${r.sub}</div>
+      </div>
+    </div>`
+  ).join('');
+  box.style.display = 'block';
+}
+
+function jumpTo(monthIndex, day) {
+  document.getElementById('searchSuggestions').style.display = 'none';
+  document.getElementById('searchInput').value = '';
+
+  document.querySelectorAll('.month-card.highlighted').forEach(el => el.classList.remove('highlighted'));
+
+  const monthEl = document.getElementById(`month-${monthIndex}`);
+  if (!monthEl) return;
+
+  monthEl.classList.add('highlighted');
+  monthEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  setTimeout(() => monthEl.classList.remove('highlighted'), 2500);
+}
+
+function changeYear(delta) {
+  currentYear += delta;
+  buildCalendar();
+  showToast(`📅 Mostrando año ${currentYear}`, '#2563eb');
+}
+
+function dateKey(y, m, d) {
+  return `${y}-${String(m + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+function refreshDay(key) {
+  const cell = document.querySelector(`[data-key="${key}"]`);
+  if (cell) {
+    applyStateToDayCell(cell, key);
+    const parts = key.split('-');
+    updateMonthCount(parseInt(parts[1]) - 1);
+  }
+  updateStats();
+}
+
+function updateMonthCount(mIdx) {
+  const el        = document.getElementById(`mcount-${mIdx}`);
+  if (!el) return;
+  const totalDays = new Date(currentYear, mIdx + 1, 0).getDate();
+  let   count     = 0;
+  for (let d = 1; d <= totalDays; d++) {
+    if (dayData[dateKey(currentYear, mIdx, d)]) count++;
+  }
+  el.textContent = count > 0 ? `${count} marcados` : '';
+}
+
+function updateStats() {
+  const counts = { work: 0, vacation: 0, holiday: 0, birthday: 0, emergency: 0 };
+  for (const k in dayData) {
+    if (k.startsWith(currentYear + '-') && counts[dayData[k].state] !== undefined) {
+      counts[dayData[k].state]++;
+    }
+  }
+  for (const s in counts) {
+    const el = document.getElementById(`stat-${s}`);
+    if (el) el.textContent = counts[s];
+  }
+}
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function showToast(message, color) {
+  const container = document.getElementById('toast-container');
+  const toast     = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `<span style="width:10px;height:10px;border-radius:3px;background:${color};flex-shrink:0;display:inline-block"></span>${message}`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3100);
+}
+
+(function init() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('hol-date').value  = today;
+  document.getElementById('bday-date').value = today;
+  document.getElementById('emg-from').value  = today;
+  document.getElementById('emg-to').value    = today;
+  document.getElementById('vac-from').value  = `${currentYear}-01-01`;
+  document.getElementById('vac-to').value    = `${currentYear}-01-15`;
+  buildCalendar();
+  setActiveTool('work');
+})();
+</script>
+</body>
+</html>
